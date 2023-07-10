@@ -17,7 +17,6 @@ th {
   white-space: pre;
 }
 
-
 .cell-skill-tested {
   font-size: 14px;
 }
@@ -38,4 +37,14 @@ th {
 
 .cell-comments {
   font-size: 14px;
+}
+
+.totals {
+  float: right;
+  padding: 1rem;
+}
+
+.total-awarded {
+  display: flex;
+  justify-content: space-between;
 }

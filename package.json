@@ -1,13 +1,14 @@
 {
-  "name": "render_gradesheet",
-  "version": "0.0.0",
+  "name": "juris-printer",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "dev": "vite",
+    "build": "vite build",
     "serve": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "space_cowboy",
+  "author": "hcwesson",
   "dependencies": {
     "@tanstack/react-table": "^8.9.3",
     "@types/papaparse": "^5.3.7",

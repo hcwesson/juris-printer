@@ -6,59 +6,66 @@ import {
 } from "@tanstack/react-table";
 import { parse, type ParseResult } from "papaparse";
 import { type RubricRow } from "../types";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import styles from "./GradeTable.module.css";
 
-const pointContainerStyle = { display: 'flex', justifyContent: 'center', alignItems: 'center' }
-const PointsAwarded = ({points, total}: {points: number, total?: number}) => {
-  let pct = 0
+const pointContainerStyle = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+};
+const PointsAwarded = ({
+  points,
+  total,
+}: {
+  points: number;
+  total?: number;
+}) => {
+  let pct = 0;
   if (total !== undefined) {
-    pct = points/total
+    pct = points / total;
   }
-  const pointBgStyle = { backgroundColor: `rgba(${255 * (1-pct)},${255 * (pct)}, 0, 0.33)`}
+  const pointBgStyle = {
+    backgroundColor: `rgba(${255 * (1 - pct)}, ${255 * pct}, 0, 0.33)`,
+  };
   return (
     <div style={pointContainerStyle}>
       <div className={styles.cellPoints} style={total ? pointBgStyle : {}}>
         {points}
       </div>
     </div>
-  )
-}
+  );
+};
 
-const PointsPossible = ({points}: {points: number}) => {
+const PointsPossible = ({ points }: { points: number }) => {
   return (
     <div style={pointContainerStyle}>
-      <div className={styles.cellPoints}>
-        {points}
-      </div>
+      <div className={styles.cellPoints}>{points}</div>
     </div>
-  )
-}
+  );
+};
 
-const Comments = ({comments}: {comments: string}) => {
-  return (
-    <div className={styles.cellComments}>
-      {comments}
-    </div>
-  )
-}
+const Comments = ({ comments }: { comments: string }) => {
+  return <div className={styles.cellComments}>{comments}</div>;
+};
 
-const SkillTested = ({skill}: {skill: string}) => {
-  return (
-    <div className={styles.cellSkillTested}>
-      {skill}
-    </div>
-  )
-}
+const SkillTested = ({ skill }: { skill: string }) => {
+  return <div className={styles.cellSkillTested}>{skill}</div>;
+};
 const colHelper = createColumnHelper<RubricRow>();
 const columns = [
   colHelper.accessor("skillTested", {
-    cell: (info) => <SkillTested skill={info.getValue() ?? ''} />,
+    cell: (info) => <SkillTested skill={info.getValue() ?? ""} />,
     header: () => <div>Skill Tested</div>,
   }),
   colHelper.accessor("pointsAwarded", {
-    cell: (info) => <PointsAwarded points={Number(info.row.original.pointsAwarded)} total={Number(info.row.original.pointsPossible)}/>,
+    cell: (info) => (
+      <PointsAwarded
+        points={Number(info.row.original.pointsAwarded)}
+        total={Number(info.row.original.pointsPossible)}
+      />
+    ),
     header: () => <div>Awarded</div>,
   }),
   colHelper.accessor("pointsPossible", {
@@ -66,21 +73,28 @@ const columns = [
     header: () => <div>Possible</div>,
   }),
   colHelper.accessor("comments", {
-    cell: (info) => <Comments comments={info.getValue() ?? ''} />,
+    cell: (info) => <Comments comments={info.getValue() ?? ""} />,
     header: () => <div>Comments</div>,
   }),
 ];
 
-// const csvUrl = new URL(`data/csv/Q1/0083.csv`, import.meta.url).href
 const csvFiles = Object.values(
   import.meta.glob("data/csv/**/*.csv", { eager: true })
 ).map((v) => (v as any)?.default);
 
-
-
 export const GradeTable = () => {
   const { questionNo = "unknown", studentId = "unknown" } = useParams();
   const [gradeCsv, setGradeCsv] = useState<RubricRow[]>([]);
+
+  const totals = useMemo(() => {
+    let totalAwarded = 0
+    let totalPossible = 0
+    gradeCsv.forEach(({ pointsPossible = 0, pointsAwarded = 0}) => {
+      totalAwarded += Number(pointsAwarded)
+      totalPossible += Number(pointsPossible)
+    })
+    return { totalAwarded, totalPossible }
+  }, [gradeCsv])
   console.log(csvFiles);
   const table = useReactTable({
     data: gradeCsv,
@@ -105,13 +119,17 @@ export const GradeTable = () => {
       error: (error: Error) => console.error(error),
       complete: (results: ParseResult<RubricRow>) => {
         console.log(results);
-        setGradeCsv(results.data.filter(res => !!res.skillTested));
+        setGradeCsv(results.data.filter((res) => !!res.skillTested));
       },
     });
   }, [studentId]);
 
   return (
     <div className="p-2">
+      <span style={{ fontSize: "24px" }}>{questionNo} Evaluation</span>
+      <span style={{ fontSize: "18px", padding: "10px", position: 'absolute', top: 0, right: 0}}>
+        Student ID: <code>{studentId}</code>
+      </span>
       <table>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -141,6 +159,12 @@ export const GradeTable = () => {
           ))}
         </tbody>
       </table>
+      <div className={styles.totals}>
+        <div className={styles.totalAwarded}>
+          <span style={{ fontSize: '20px', lineHeight: 2.0, paddingRight: '1rem' }}>Section score:</span>
+          <PointsAwarded points={totals.totalAwarded} total={totals.totalPossible}/>
+        </div>
+      </div>
       <div className="h-4" />
     </div>
   );

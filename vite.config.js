@@ -16,6 +16,9 @@ export default defineConfig({
     modules: {
       localsConvention: 'camelCaseOnly',
     }
+  },
+  build: {
+    assetsInlineLimit: 0,
   }
 })
 
